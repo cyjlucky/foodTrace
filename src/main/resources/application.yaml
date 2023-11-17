@@ -1,0 +1,43 @@
+server:
+    port: 8088
+
+pattern:
+    contractAddress: "0x9096aed62e4a516a3015e4eabbda37c4cfecf870"
+    myWeBASEAndPort: "http://192.168.121.144:5002/"
+    API:
+        privateKey: "WeBASE-Front/privateKey"
+        trans: "WeBASE-Front/trans/handleWithSign"
+
+spring:
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: "jdbc:mysql://localhost:3306/trace?serverTimezone=UTC"
+        username: root
+        password: root
+    # 发送 邮箱 验证码 所需的 配置
+    mail:
+        #smtp服务主机  qq邮箱则为smtp.qq.com;163邮箱是smtp.163.com
+        host: smtp.qq.com
+        #服务协议
+        protocol: smtp
+        # 编码集
+        default-encoding: UTF-8
+        #发送邮件的邮箱
+        username: imsccs@foxmail.com
+        #授权码
+        password: nqfyhcjgrtgwdgcg
+        test-connection: true
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
+                        required: true
+
+mybatis-plus:
+    configuration:
+        log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    global-config:
+        db-config:
+            id-type: auto
