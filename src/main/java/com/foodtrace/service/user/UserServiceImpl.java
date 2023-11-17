@@ -17,6 +17,7 @@ import com.foodtrace.vo.Food;
 import com.foodtrace.vo.KeyPairResult;
 import com.foodtrace.vo.User;
 import com.foodtrace.vo.UserAndFood;
+import org.python.antlr.ast.Str;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -189,6 +190,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         map.put("userName", user.getUserName());
 
         return R.ok().put("data", map);
+    }
+
+    @Override
+    public R updatePassword(String token,String oldPassword,String newPassword) {
+        if (token == null){
+            return R.error(402, "用户未登录!");
+        }
+        if (redisUtils.get(token) == null) {
+            return R.error(502, "身份令牌已过期!");
+        }
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_name", redisUtils.get(token));
+        wrapper.eq("password", DigestUtils.md5DigestAsHex(oldPassword.getBytes()));
+        User user = userMapper.selectOne(wrapper);
+        if (user == null) {
+            return R.error(400, "原密码错误!");
+        }
+        user.setPassword(DigestUtils.md5DigestAsHex(newPassword.getBytes()));
+        userMapper.updateById(user);
+        return R.ok();
+    }
+
+    @Override
+    public R updateUser(String token, User user) {
+        if (token == null){
+            return R.error(402, "用户未登录!");
+        }
+        if (redisUtils.get(token) == null) {
+            return R.error(502, "身份令牌已过期!");
+        }
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_name", user.getUserName());
+        userMapper.update(user,wrapper);
+        return R.ok();
     }
 
 

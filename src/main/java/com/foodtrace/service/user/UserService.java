@@ -1,5 +1,6 @@
 package com.foodtrace.service.user;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.foodtrace.result.R.R;
 import com.foodtrace.vo.User;
@@ -14,4 +15,8 @@ public interface UserService extends IService<User> {
     R allFoodByUser(String token);
     R userInfo(String token);
     R isRetailer(String address);
+
+    R updatePassword(String token,String oldPassword,String newPassword);
+
+    R updateUser(String token,User user);
 }

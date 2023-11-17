@@ -21,11 +21,9 @@ import com.foodtrace.vo.Food;
 import com.foodtrace.vo.User;
 import com.foodtrace.vo.UserAndFood;
 import com.foodtrace.vo.bo.FoodBO;
-import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.management.MXBean;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -105,7 +103,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             wrapper.eq("user_name", (redisUtils.get(token)));
             User user = userMapper.selectOne(wrapper);
 
-            List param = new ArrayList();
+            List<java.io.Serializable> param = new ArrayList<java.io.Serializable>();
             param.add(traceNumber);
             param.add(food.getFoodName());
             param.add(food.getExpiration());
@@ -122,7 +120,8 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             if (!res.get("message").equals("Success")) {
                 return R.error(407, res.get("message").toString());
             }
-
+            userAndFood.setTxHash((String) res.get("transactionHash"));
+            userAndFood.setBlockNumber((String) res.get("blockNumber"));
             // 食品信息插入数据库
             foodMapper.insert(food);
 
@@ -161,7 +160,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         userQueryWrapper.eq("user_name", (redisUtils.get(token)));
         User user = userMapper.selectOne(userQueryWrapper);
 
-        List param = new ArrayList();
+        List<java.io.Serializable> param = new ArrayList<java.io.Serializable>();
         param.add(food.getTraceNumber());
         param.add(userAndFood.getOrigin());
         param.add(userAndFood.getTimestamp());
@@ -182,6 +181,8 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         foodUpdateWrapper.set("status", 2);
         foodUpdateWrapper.set("quality", food.getQuality());
         foodMapper.update(null, foodUpdateWrapper);
+        userAndFood.setTxHash((String) res.get("transactionHash"));
+        userAndFood.setBlockNumber((String) res.get("blockNumber"));
 
         // 设置外键, 这里应该处理第三个表
         userAndFood.setUserId(user.getId());
@@ -217,7 +218,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         userQueryWrapper.eq("user_name", (redisUtils.get(token)));
         User user = userMapper.selectOne(userQueryWrapper);
 
-        List param = new ArrayList();
+        List<java.io.Serializable> param = new ArrayList<>();
         param.add(food.getTraceNumber());
         param.add(userAndFood.getOrigin());
         param.add(userAndFood.getTimestamp());
@@ -238,6 +239,8 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         foodUpdateWrapper.set("status", 3);
         foodUpdateWrapper.set("quality", food.getQuality());
         foodMapper.update(null, foodUpdateWrapper);
+        userAndFood.setTxHash((String) res.get("transactionHash"));
+        userAndFood.setBlockNumber((String) res.get("blockNumber"));
 
         // 设置外键, 这里应该处理第三个表
         userAndFood.setUserId(user.getId());
@@ -261,7 +264,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         userQueryWrapper.eq("user_name", (redisUtils.get(token)));
         User user = userMapper.selectOne(userQueryWrapper);
 
-        List param = new ArrayList();
+        List<String> param = new ArrayList<>();
         param.add(traceNumber);
 
         String result = weBASEUtils.funcPost(user.getUserName(), "getFoodTrace", param);
@@ -269,12 +272,15 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         QueryWrapper<Food> foodQueryWrapper = new QueryWrapper<>();
         foodQueryWrapper.eq("trace_number", traceNumber);
         Food food = foodMapper.selectOne(foodQueryWrapper);
+        QueryWrapper<UserAndFood> userAndFoodQueryWrapper = new QueryWrapper<>();
+        userAndFoodQueryWrapper.eq("trace_number", traceNumber);
+        List<UserAndFood> userAndFoods = userAndFoodMapper.selectList(userAndFoodQueryWrapper);
 
-        List list = new ArrayList();
+        List<HashMap<String, Object>> list = new ArrayList<>();
         for (int k = 0; k < array.size(); k++) {
             for (int i = 0; i < array.getJSONArray(k).size(); i++) {
                 if (i == 0) {
-                    HashMap map = new HashMap();
+                    HashMap<String, Object> map = new HashMap<String, Object>();
                     map.put("traceNumber", traceNumber);
                     map.put("foodName", array.getJSONArray(k).getJSONArray(i).get(0));
                     map.put("origin", array.getJSONArray(k).getJSONArray(i).get(1));
@@ -286,9 +292,11 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
                     map.put("address", array.getJSONArray(k).getJSONArray(i).get(7));
                     map.put("expiration", food.getExpiration());
                     map.put("specification", food.getSpecification());
+                    map.put("txhash",userAndFoods.get(i).getTxHash());
+                    map.put("blocknumber",userAndFoods.get(i).getBlockNumber());
                     list.add(map);
                 } else {
-                    HashMap map = new HashMap();
+                    HashMap<String, Object> map = new HashMap<String, Object>();
                     map.put("traceNumber", traceNumber);
                     map.put("origin", array.getJSONArray(k).getJSONArray(i).get(1));
                     map.put("timestamp", array.getJSONArray(k).getJSONArray(i).get(2));
@@ -298,12 +306,14 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
                     map.put("address", array.getJSONArray(k).getJSONArray(i).get(7));
                     map.put("expiration", food.getExpiration());
                     map.put("specification", food.getSpecification());
+                    map.put("txhash",userAndFoods.get(i).getTxHash());
+                    map.put("blocknumber",userAndFoods.get(i).getBlockNumber());
                     list.add(map);
                 }
             }
         }
 
-        HashMap map = new HashMap();
+        HashMap<String, List<HashMap<String, Object>>> map = new HashMap<String, List<HashMap<String, Object>>>();
         map.put("trace", list);
 
         return R.ok().put("data", map);
@@ -339,7 +349,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         }
         food.setUsers(userList);
 
-        HashMap map = new HashMap();
+        HashMap<String, Food> map = new HashMap<String, Food>();
         map.put("food", food);
         return R.ok().put("data", map);
     }
@@ -354,8 +364,11 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
         }
 
         com.baomidou.mybatisplus.extension.plugins.pagination.Page<UserAndFood> page = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(current, size);
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.select("id").eq("user_name",redisUtils.get(token));
+        User user = userMapper.selectOne(userQueryWrapper);
         QueryWrapper<UserAndFood> userAndFoodQueryWrapper = new QueryWrapper<>();
-        userAndFoodQueryWrapper.select("*, GROUP_CONCAT(DISTINCT trace_number)").ge("timestamp", minTime).le("timestamp", maxTime).groupBy("trace_number").orderByDesc("id");
+        userAndFoodQueryWrapper.select("*, GROUP_CONCAT(DISTINCT trace_number)").ge("timestamp", minTime).le("timestamp", maxTime).eq("user_id",user.getId()).groupBy("trace_number").orderByDesc("id");
         Page<UserAndFood> userAndFoodPage = userAndFoodMapper.selectPage(page, userAndFoodQueryWrapper);
         List<UserAndFood> userAndFoods = userAndFoodPage.getRecords();
 
@@ -368,7 +381,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
                 continue;
             }
 
-            HashMap foodMap = new HashMap();
+            HashMap<String, java.io.Serializable> foodMap = new HashMap<String, java.io.Serializable>();
             foodMap.put("traceNumber", food.getTraceNumber());
             foodMap.put("foodName", food.getFoodName());
             foodMap.put("batches", food.getBatches());
@@ -379,7 +392,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             foods.add(foodMap);
         }
 
-        HashMap map = new HashMap();
+        HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("food", foods);
         map.put("pages", page.getPages());
         map.put("total", page.getTotal());
@@ -389,15 +402,17 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
 
     @Override
     public R getAllFoodByTime(String minTime, String maxTime, String token) {
-//        if (token == null) {
-//            return R.error(402, "用户未登录!");
-//        }
-//        if (redisUtils.get(token) == null) {
-//            return R.error(502, "身份令牌已过期!");
-//        }
-
+        if (token == null) {
+            return R.error(402, "用户未登录!");
+        }
+        if (redisUtils.get(token) == null) {
+            return R.error(502, "身份令牌已过期!");
+        }
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.select("id").eq("user_name",redisUtils.get(token));
+        User user = userMapper.selectOne(userQueryWrapper);
         QueryWrapper<UserAndFood> userAndFoodQueryWrapper = new QueryWrapper<>();
-        userAndFoodQueryWrapper.select("trace_number, operator, timestamp, GROUP_CONCAT(DISTINCT trace_number)").ge("timestamp", minTime).le("timestamp", maxTime).groupBy("trace_number");
+        userAndFoodQueryWrapper.select("trace_number, operator, timestamp, GROUP_CONCAT(DISTINCT trace_number)").ge("timestamp", minTime).lt("timestamp", maxTime).eq("user_id",user.getId()).groupBy("trace_number");
         List<UserAndFood> userAndFoods = userAndFoodMapper.selectList(userAndFoodQueryWrapper);
 
         List foods = new ArrayList<>();
@@ -408,7 +423,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             if (food == null) {
                 continue;
             }
-            HashMap foodMap = new HashMap();
+            HashMap<String, java.io.Serializable> foodMap = new HashMap<String, java.io.Serializable>();
             foodMap.put("traceNumber", food.getTraceNumber());
             foodMap.put("foodName", food.getFoodName());
             foodMap.put("batches", food.getBatches());
@@ -419,7 +434,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             foods.add(foodMap);
         }
 
-        HashMap map = new HashMap();
+        HashMap<String, List<Object>> map = new HashMap<String, List<Object>>();
         map.put("food", foods);
 
         return R.ok().put("data", map);
@@ -443,7 +458,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             userAndFoods = userAndFoodMapper.getOneYearNumber();
         }
 
-        HashMap map = new HashMap();
+        HashMap<String, List<Map<String, Object>>> map = new HashMap<>();
         map.put("number", userAndFoods);
 
         return R.ok().put("data", map);
@@ -480,7 +495,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             return R.error(400, "未上传该商品信息!");
         }
 
-        HashMap map = new HashMap();
+        HashMap<String, String> map = new HashMap<>();
         map.put("traceNumber", food.getTraceNumber());
         map.put("foodName", food.getFoodName());
 
@@ -515,7 +530,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             if (food == null) {
                 continue;
             }
-            HashMap foodMap = new HashMap();
+            HashMap<String, java.io.Serializable> foodMap = new HashMap<String, java.io.Serializable>();
             foodMap.put("traceNumber", food.getTraceNumber());
             foodMap.put("foodName", food.getFoodName());
             foodMap.put("batches", food.getBatches());
@@ -530,7 +545,7 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
             return R.error(400, "批次号不存在!");
         }
 
-        HashMap map = new HashMap();
+        HashMap<String, List<Object>> map = new HashMap<>();
         map.put("foods", foods);
 
         return R.ok().put("data", map);
@@ -544,8 +559,17 @@ public class FoodServiceImpl extends ServiceImpl<FoodMapper, Food> implements Fo
     }
 
     @Override
-    public R removeFoodList() {
-        return null;
+    public R removeAllFood(String userName) {
+        List<Food> foodList = foodMapper.selectList(null);
+        for (Food food:
+             foodList) {
+            List<String> param = new ArrayList<String>();
+            param.add(food.getTraceNumber());
+            weBASEUtils.funcPost("admin", "removeFoodInfo", param);
+        }
+        foodMapper.delete(null);
+        userAndFoodMapper.delete(null);
+        return R.ok();
     }
 
 }

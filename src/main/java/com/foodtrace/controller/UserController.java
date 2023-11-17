@@ -1,5 +1,6 @@
 package com.foodtrace.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.foodtrace.result.R.R;
 import com.foodtrace.service.user.UserService;
 import com.foodtrace.utils.RedisUtils;
@@ -53,7 +54,17 @@ public class UserController {
         return userService.isRetailer(address);
     }
 
+    @PostMapping("/updatePassword")
+    @ResponseBody
+    public R updatePassword(@RequestHeader(required = false) String token,@RequestBody JSONObject jsonObject){
+        return userService.updatePassword(token,jsonObject.getString("oldPassword"),jsonObject.getString("newPassword"));
+    }
 
+    @PostMapping("/updateUser")
+    @ResponseBody
+    public R updateUser(@RequestHeader(required = false) String token,@RequestBody User user){
+        return userService.updateUser(token,user);
+    }
     /**
      * 检查 token 是否存活
      *

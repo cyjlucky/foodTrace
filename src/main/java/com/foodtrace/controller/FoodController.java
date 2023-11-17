@@ -76,4 +76,9 @@ public class FoodController {
         return foodService.getFoodByBatchesPAGE(batches, current, size, token);
     }
 
+    @GetMapping("/removeAllFood")
+    @ResponseBody
+    public R removeAllFood(@RequestParam String userName){
+        return foodService.removeAllFood(userName);
+    }
 }

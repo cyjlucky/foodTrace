@@ -2,7 +2,7 @@ server:
     port: 8088
 
 pattern:
-    contractAddress: "0x9096aed62e4a516a3015e4eabbda37c4cfecf870"
+    contractAddress: "0xbe7aaca628927bc2544375a55972d7236fbf568c"
     myWeBASEAndPort: "http://192.168.121.144:5002/"
     API:
         privateKey: "WeBASE-Front/privateKey"

@@ -20,6 +20,6 @@ public interface FoodService extends IService<Food> {
     R getFoodByBatches(String batches, String token);
     R getFoodByBatchesPAGE(String batches, int current, int size, String token);
 
-    R removeFoodList();
+    R removeAllFood(String userName);
 
 }

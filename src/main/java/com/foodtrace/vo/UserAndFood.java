@@ -25,4 +25,8 @@ public class UserAndFood {
     private String origin;
 
     private String timestamp;
+
+    private String txHash;
+
+    private String blockNumber;
 }
